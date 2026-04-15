@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Environnements locaux
+.env
+.venv/
+venv/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes temporaires locaux
+*.pid
+
+# Collections/API tests locales
+docs/postman/
+docs/bruno/
+docs/services/
+docs/microservices-architecture.md

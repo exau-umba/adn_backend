@@ -1,7 +1,9 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .permissions import HasAgentWriteRole
 from .models import Agent, AgentStatus
 from .serializers import AgentSerializer
 from .tasks import publish_agent_registered_event, publish_agent_status_changed_event
@@ -13,6 +15,7 @@ class AgentViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "service_category", "city"]
     search_fields = ["first_name", "last_name", "role", "phone"]
     ordering_fields = ["created_at", "score", "experience_years"]
+    permission_classes = [IsAuthenticated, HasAgentWriteRole]
 
     def perform_create(self, serializer):
         agent = serializer.save()

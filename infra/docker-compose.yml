@@ -8,6 +8,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - agents-service
+      - users-service
 
   agents-service:
     build:
@@ -34,6 +35,30 @@ services:
       - "5434:5432"
     volumes:
       - agents_db_data:/var/lib/postgresql/data
+
+  users-service:
+    build:
+      context: ../services/users_service
+    container_name: adn_users_service
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - ../services/users_service/.env.example
+    volumes:
+      - ../services/users_service:/app
+    depends_on:
+      - users_db
+
+  users_db:
+    image: postgres:16-alpine
+    container_name: adn_users_db
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: users_user
+      POSTGRES_PASSWORD: users_password
+    ports:
+      - "5435:5432"
+    volumes:
+      - users_db_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -79,3 +104,4 @@ services:
 
 volumes:
   agents_db_data:
+  users_db_data:
