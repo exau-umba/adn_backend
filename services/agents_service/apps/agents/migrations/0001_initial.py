@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="AgentAvailability",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("full_time", models.BooleanField(default=False)),
                 ("part_time", models.BooleanField(default=False)),
                 ("lodged", models.BooleanField(default=False)),
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="AgentSkill",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("name", models.CharField(max_length=100)),
                 ("agent", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="skills", to="agents.agent")),
             ],

@@ -31,6 +31,7 @@ class Agent(models.Model):
 
 
 class AgentSkill(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     agent = models.ForeignKey(Agent, related_name="skills", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
@@ -39,6 +40,7 @@ class AgentSkill(models.Model):
 
 
 class AgentAvailability(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     agent = models.OneToOneField(Agent, related_name="availability", on_delete=models.CASCADE)
     full_time = models.BooleanField(default=False)
     part_time = models.BooleanField(default=False)
