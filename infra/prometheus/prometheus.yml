@@ -4,5 +4,5 @@ global:
 scrape_configs:
   - job_name: "agents_service"
     static_configs:
-      - targets: ["agents_service:8000"]
+      - targets: ["agents-service:8000"]
     metrics_path: /metrics
