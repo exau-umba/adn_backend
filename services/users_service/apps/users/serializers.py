@@ -56,3 +56,9 @@ class UserRoleAssignSerializer(serializers.Serializer):
         if missing:
             raise serializers.ValidationError(f"Roles inexistants: {', '.join(missing)}")
         return value
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "first_name", "last_name", "phone", "is_active"]

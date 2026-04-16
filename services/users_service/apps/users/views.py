@@ -9,7 +9,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .auth import ADNTokenObtainPairSerializer, build_token_pair
 from .models import Role
-from .serializers import RoleSerializer, UserRegisterSerializer, UserRoleAssignSerializer, UserSerializer
+from .serializers import RoleSerializer, UserRegisterSerializer, UserRoleAssignSerializer, UserSerializer, UserUpdateSerializer
 
 User = get_user_model()
 
@@ -56,10 +56,33 @@ class RoleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
 
 
-class UserViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class UserViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = User.objects.prefetch_related("roles").all().order_by("username")
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+
+    def get_serializer_class(self):
+        if self.action in {"update", "partial_update"}:
+            return UserUpdateSerializer
+        return UserSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        instance.refresh_from_db()
+        return Response(UserSerializer(instance).data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"], url_path="assign-roles")
     def assign_roles(self, request, pk=None):
