@@ -58,6 +58,8 @@ services:
     depends_on:
       users_db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
 
   users_db:
     image: postgres:16-alpine
@@ -89,6 +91,19 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  notification-service:
+    build:
+      context: ../services/notification_service
+    container_name: adn_notification_service
+    command: python consumer.py
+    env_file:
+      - ../services/notification_service/.env.example
+    volumes:
+      - ../services/notification_service:/app
+    depends_on:
+      rabbitmq:
+        condition: service_started
 
   celery_agents:
     build:
