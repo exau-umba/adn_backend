@@ -14,6 +14,9 @@ from .serializers import RoleSerializer, UserRegisterSerializer, UserRoleAssignS
 
 User = get_user_model()
 
+def serialize_user(request, user):
+    return UserSerializer(user, context={"request": request}).data
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -34,7 +37,7 @@ class RegisterView(APIView):
         token_pair = build_token_pair(user)
         return Response(
             {
-                "user": UserSerializer(user).data,
+                "user": serialize_user(request, user),
                 "access": token_pair["access"],
                 "refresh": token_pair["refresh"],
             },
@@ -48,7 +51,7 @@ class LoginView(TokenObtainPairView):
 
 class MeView(APIView):
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        return Response(serialize_user(request, request.user))
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -87,7 +90,7 @@ class UserViewSet(
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         instance.refresh_from_db()
-        return Response(UserSerializer(instance).data, status=status.HTTP_200_OK)
+        return Response(serialize_user(request, instance), status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
@@ -102,4 +105,4 @@ class UserViewSet(
         roles = Role.objects.filter(code__in=serializer.validated_data["role_codes"])
         user.roles.set(roles)
 
-        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        return Response(serialize_user(request, user), status=status.HTTP_200_OK)

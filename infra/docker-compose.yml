@@ -54,6 +54,7 @@ services:
       - ../services/users_service/.env.example
     volumes:
       - ../services/users_service:/app
+      - users_media_data:/app/media
     depends_on:
       users_db:
         condition: service_healthy
@@ -121,3 +122,4 @@ services:
 volumes:
   agents_db_data:
   users_db_data:
+  users_media_data:

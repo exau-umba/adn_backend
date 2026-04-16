@@ -19,7 +19,7 @@ class Role(models.Model):
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(max_length=30, blank=True)
-    profile_photo_url = models.URLField(blank=True)
+    profile_photo = models.ImageField(upload_to="profiles/", blank=True, null=True)
     roles = models.ManyToManyField(Role, related_name="users", blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-users-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
@@ -69,6 +70,9 @@ TIME_ZONE = "Africa/Kinshasa"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media"))
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
