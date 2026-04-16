@@ -9,7 +9,7 @@ User = get_user_model()
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
-        fields = ["id", "code", "label", "description"]
+        fields = ["id", "code", "label", "description", "permissions", "created_at", "updated_at"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,6 +28,9 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "is_superuser",
+            "date_joined",
+            "last_login",
+            "updated_at",
             "roles",
         ]
 

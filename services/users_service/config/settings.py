@@ -73,10 +73,13 @@ STATIC_URL = "static/"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_PAGINATION_CLASS": "config.pagination.ADNPageNumberPagination",
+    "PAGE_SIZE": int(os.getenv("REST_PAGE_SIZE", "20")),
 }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_LIFETIME_MINUTES", "15"))),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_REFRESH_LIFETIME_DAYS", "7"))),
     "SIGNING_KEY": os.getenv("JWT_SHARED_SECRET", SECRET_KEY),
+    "UPDATE_LAST_LOGIN": True,
 }

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -54,6 +55,10 @@ class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all().order_by("code")
     serializer_class = RoleSerializer
     permission_classes = [IsAdminUser]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["code", "label", "description"]
+    ordering_fields = ["code", "label", "created_at", "updated_at"]
+    ordering = ["code"]
 
 
 class UserViewSet(
@@ -65,6 +70,10 @@ class UserViewSet(
     queryset = User.objects.prefetch_related("roles").all().order_by("username")
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["username", "email", "first_name", "last_name", "roles__code", "roles__label"]
+    ordering_fields = ["username", "email", "date_joined", "last_login", "updated_at"]
+    ordering = ["username"]
 
     def get_serializer_class(self):
         if self.action in {"update", "partial_update"}:
