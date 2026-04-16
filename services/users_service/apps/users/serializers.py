@@ -25,6 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "full_name",
             "phone",
+            "profile_photo_url",
             "is_active",
             "is_staff",
             "is_superuser",
@@ -40,7 +41,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "email", "first_name", "last_name", "phone", "password"]
+        fields = ["username", "email", "first_name", "last_name", "phone", "profile_photo_url", "password"]
 
     def create(self, validated_data):
         password = validated_data.pop("password")
@@ -64,4 +65,4 @@ class UserRoleAssignSerializer(serializers.Serializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "first_name", "last_name", "phone", "is_active"]
+        fields = ["email", "first_name", "last_name", "phone", "profile_photo_url", "is_active"]
