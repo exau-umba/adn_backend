@@ -87,3 +87,18 @@ SIMPLE_JWT = {
     "SIGNING_KEY": os.getenv("JWT_SHARED_SECRET", SECRET_KEY),
     "UPDATE_LAST_LOGIN": True,
 }
+
+ACCOUNT_TOKEN_EXPIRATION_MINUTES = int(os.getenv("ACCOUNT_TOKEN_EXPIRATION_MINUTES", "60"))
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "mail.adnproservice.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "465"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "no-reply@adnproservice.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "True").lower() == "true"
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() == "true"
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+
+RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
+NOTIFICATION_EMAIL_QUEUE = os.getenv("NOTIFICATION_EMAIL_QUEUE", "notification.email.queue")
