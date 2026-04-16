@@ -6,6 +6,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core import signing
 
@@ -188,6 +189,17 @@ class UserViewSet(
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        if instance.pk == self.request.user.pk and serializer.validated_data.get("is_active") is False:
+            raise PermissionDenied("Vous ne pouvez pas désactiver votre propre compte.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.pk == self.request.user.pk:
+            raise PermissionDenied("Vous ne pouvez pas supprimer votre propre compte.")
+        super().perform_destroy(instance)
 
     @action(detail=True, methods=["post"], url_path="assign-roles")
     def assign_roles(self, request, pk=None):
