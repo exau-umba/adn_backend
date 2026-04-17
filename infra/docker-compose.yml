@@ -9,6 +9,7 @@ services:
     depends_on:
       - agents-service
       - users-service
+      - notification-service
 
   agents-service:
     build:

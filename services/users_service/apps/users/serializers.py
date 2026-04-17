@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import Role
+from .models import InAppNotification, Role
 
 User = get_user_model()
 
@@ -79,6 +80,46 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "first_name", "last_name", "phone", "profile_photo", "is_active"]
+
+
+class MeUpdateSerializer(serializers.ModelSerializer):
+    """Mise à jour du compte connecté (sans statut actif / staff)."""
+
+    profile_photo = serializers.ImageField(write_only=True, required=False, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = ["email", "first_name", "last_name", "phone", "profile_photo"]
+
+    def validate_email(self, value):
+        user = self.instance
+        if user and User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("Cette adresse e-mail est déjà utilisée.")
+        return value
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_new_password(self, value):
+        user = self.context["request"].user
+        validate_password(value, user)
+        return value
+
+
+class InAppNotificationSerializer(serializers.ModelSerializer):
+    read = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InAppNotification
+        fields = ["id", "title", "body", "category", "read", "read_at", "created_at"]
+        read_only_fields = ["id", "title", "body", "category", "read_at", "created_at", "read"]
+
+    def get_read(self, obj):
+        return obj.read_at is not None
+
+
 
 
 class AccountActivationSerializer(serializers.Serializer):

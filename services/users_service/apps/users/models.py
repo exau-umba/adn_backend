@@ -16,6 +16,24 @@ class Role(models.Model):
         return self.label
 
 
+class InAppNotification(models.Model):
+    """Notification affichée dans l’admin webapp (centre de notifications)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="in_app_notifications")
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+    category = models.CharField(max_length=50, default="info")
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return self.title
+
+
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone = models.CharField(max_length=30, blank=True)

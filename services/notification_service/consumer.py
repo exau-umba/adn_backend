@@ -1,9 +1,10 @@
 import json
 import os
+import time
 
 import pika
 from mailing import dispatch_notification
-from test_mail_api import start_mail_test_api_background
+from test_mail_api import start_notification_http_background
 
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/%2F")
@@ -38,15 +39,21 @@ def on_message(channel, method, properties, body):
 
 
 def main():
-    start_mail_test_api_background()
+    start_notification_http_background()
     params = pika.URLParameters(RABBITMQ_URL)
-    connection = pika.BlockingConnection(params)
-    channel = connection.channel()
-    channel.queue_declare(queue=QUEUE, durable=True)
-    channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue=QUEUE, on_message_callback=on_message)
-    print(f"[notification] Listening queue: {QUEUE}")
-    channel.start_consuming()
+    retry_delay = int(os.getenv("RABBITMQ_CONNECT_RETRY_SEC", "3"))
+    while True:
+        try:
+            connection = pika.BlockingConnection(params)
+            channel = connection.channel()
+            channel.queue_declare(queue=QUEUE, durable=True)
+            channel.basic_qos(prefetch_count=1)
+            channel.basic_consume(queue=QUEUE, on_message_callback=on_message)
+            print(f"[notification] Listening queue: {QUEUE}")
+            channel.start_consuming()
+        except Exception as exc:
+            print(f"[notification] RabbitMQ indisponible: {exc}. Nouvelle tentative dans {retry_delay}s...")
+            time.sleep(retry_delay)
 
 
 if __name__ == "__main__":

@@ -3,20 +3,26 @@ from django.conf import settings
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core import signing
+from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 
 from .auth import ADNTokenObtainPairSerializer, build_token_pair
-from .models import Role
+from .in_app import create_in_app_notification
+from .models import InAppNotification, Role
 from .emails import send_activation_email, send_password_setup_email
 from .tokens import parse_account_token
 from .serializers import (
     AccountActivationSerializer,
     AdminInviteUserSerializer,
+    ChangePasswordSerializer,
+    InAppNotificationSerializer,
+    MeUpdateSerializer,
     RoleSerializer,
     UserRegisterSerializer,
     UserRoleAssignSerializer,
@@ -94,6 +100,7 @@ class ActivateAccountView(APIView):
         user = User.objects.filter(id=user_id).first()
         if not user:
             return Response({"detail": "Utilisateur introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        validate_password(password, user)
         user.set_password(password)
         user.is_active = True
         user.save(update_fields=["password", "is_active"])
@@ -124,6 +131,7 @@ class SetupPasswordView(APIView):
         user = User.objects.filter(id=user_id).first()
         if not user:
             return Response({"detail": "Utilisateur introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        validate_password(password, user)
         user.set_password(password)
         user.is_active = True
         user.save(update_fields=["password", "is_active"])
@@ -143,8 +151,68 @@ class LoginView(TokenObtainPairView):
 
 
 class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         return Response(serialize_user(request, request.user))
+
+    def patch(self, request):
+        serializer = MeUpdateSerializer(request.user, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        request.user.refresh_from_db()
+        create_in_app_notification(
+            user=request.user,
+            title="Profil mis à jour",
+            body="Vos informations de compte ont été enregistrées.",
+            category="account",
+        )
+        return Response(serialize_user(request, request.user))
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        if not request.user.check_password(serializer.validated_data["current_password"]):
+            return Response({"detail": "Mot de passe actuel incorrect."}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.set_password(serializer.validated_data["new_password"])
+        request.user.save(update_fields=["password"])
+        create_in_app_notification(
+            user=request.user,
+            title="Mot de passe modifié",
+            body="Votre mot de passe a été changé avec succès.",
+            category="security",
+        )
+        return Response({"detail": "Mot de passe modifié."}, status=status.HTTP_200_OK)
+
+
+class InAppNotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = InAppNotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return InAppNotification.objects.filter(user=self.request.user)
+
+    @action(detail=True, methods=["post"], url_path="mark-read")
+    def mark_read(self, request, pk=None):
+        n = self.get_object()
+        if n.read_at is None:
+            n.read_at = timezone.now()
+            n.save(update_fields=["read_at"])
+        return Response(InAppNotificationSerializer(n, context={"request": request}).data)
+
+    @action(detail=False, methods=["post"], url_path="mark-all-read")
+    def mark_all_read(self, request):
+        self.get_queryset().filter(read_at__isnull=True).update(read_at=timezone.now())
+        return Response({"detail": "Toutes les notifications sont marquées comme lues."})
+
+    @action(detail=False, methods=["get"], url_path="unread-count")
+    def unread_count(self, request):
+        count = self.get_queryset().filter(read_at__isnull=True).count()
+        return Response({"count": count})
 
 
 class RoleViewSet(viewsets.ModelViewSet):
